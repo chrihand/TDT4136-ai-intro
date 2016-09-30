@@ -88,7 +88,7 @@ def display_path(came_from, current, board):
         elif node.character == "B":
             node.character = color(32, "B")
         else:
-            node.character = color(31, "0")
+            node.character = color(31, "O")
 
     for nodes in board:
         for node in nodes:
@@ -168,5 +168,5 @@ class Node(object):
             self.cost = 1
 
 if __name__ == "__main__":
-    board_data = read_board(board_id="2-4")  # run_board returns board, start, end as a tuple
+    board_data = read_board(board_id="2-2")  # run_board returns board, start, end as a tuple
     run_astar(*board_data)  # tuple unpacking, spread tuple as arguments
