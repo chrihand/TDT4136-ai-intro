@@ -5,85 +5,61 @@ def heuristic(node, end_node):
     return abs(node.x - end_node.x) + (node.y - end_node.y)
 
 
-def run_astar(board, start, end):
+def run_astar(board, start_node, end_node):
     if not isinstance(board, list):
         return "Board must be a list"
 
-    priority_queue = []
-    heapq.heapify(priority_queue)
-
-    start_node = start
-    end_node = end
     board_width = len(board[0])
     board_height = len(board)
-    #print(board_width, ' ', board_height)
 
+    closed_node = set()
+
+    priority_queue = []
+    heapq.heapify(priority_queue)
     heapq.heappush(priority_queue, start_node)
 
 
-    node_path = {}
-    node_path[start_node] = None
-    key = 0
-    closed_node = set()
-    #total_cost = {}
-    #total_cost[start_node] = 0
+    came_from = {}
 
-    #print(priority_queue)
+    start_node.g = 0
+    start_node.f = start_node.g + heuristic(start_node, end_node)
+
 
     while priority_queue:
         current_node = heapq.heappop(priority_queue)
-        #print("curr", current_node)
-        closed_node.add(current_node)
+        # print("curr", current_node)
 
         if current_node == end_node:
+            display_path(came_from, current_node, board)
             print("done")
-            display_path(board, node_path)
             break
 
+        closed_node.add(current_node)
+        # print(closed_node)
+
         adj_nodes = get_adjacent_nodes(current_node, board_width, board_height, board)
-        #print(adj_nodes)
+        # print(adj_nodes)
 
         for adj_node in adj_nodes:
             if adj_node in closed_node:
                 continue
 
-            temp_score = current_node.g + (current_node.g - adj_node.g)
+            temp_gScore = current_node.g + (current_node.g - adj_node.g)
 
-            if adj_node.walkable and adj_node not in node_path:
+            if adj_node.walkable and adj_node not in came_from:
                 heapq.heappush(priority_queue, adj_node)
-
-            elif temp_score >= adj_node.g:
+            elif temp_gScore >= adj_node.g:
                 continue
 
-            key += 1
-            node_path.update({adj_node: key})
-            adj_node.g = temp_score
-            adj_node.h =heuristic(adj_node, end_node)
+            came_from[adj_node] = current_node
+            adj_node.g = temp_gScore
+            adj_node.h = heuristic(adj_node, end_node)
             adj_node.f = adj_node.g + adj_node.h
 
-                #if adj_node in priority_queue:
-                #    if adj_node.g < current_node.g:
-                #        adj_node.g += 1
-                #        adj_node.h = heuristic(adj_node, end_node)
-                #        adj_node.f = adj_node.g + adj_node.h
-                #        adj_node.parent = current_node
-
-                #    else:
-                #        adj_node.g += 1
-                #        adj_node.h = heuristic(adj_node, end_node)
-                #        adj_node.f = adj_node.g + adj_node.h
-                #        adj_node.parent = current_node
-                #heapq.heappush(priority_queue, adj_node)
-
-
-
-
-    #print(priority_queue)
 
 def get_adjacent_nodes(current_node, board_w, board_h, board):
-    #print("\nCurrent", current_node)
     adj_nodes = []
-    # print(current_node, board_w, board_h)
+
     if current_node.x > 0:
         adj_nodes.append(board[current_node.x - 1][current_node.y])
 
@@ -98,15 +74,19 @@ def get_adjacent_nodes(current_node, board_w, board_h, board):
 
     return adj_nodes
 
-#def update_node(adj_node, current_node, end_node):
-#    adj_node.g = current_node.g
-#    adj_node.h = heuristic(adj_node, end_node)
-#    adj_node.f = adj_node.g + adj_node.h
-#    adj_node.parent = current_node
+def display_path(came_from, current, board):
+    node_path = [current]
+    while current in came_from.keys():
+        current = came_from[current]
+        node_path.append(current)
 
-def display_path(board, node_path):
     for node in node_path:
-        node.character = "O"
+        if node.character == "A":
+            node.character = "S"
+        elif node.character == "B":
+            node.character = "E"
+        else:
+            node.character = "O"
     print("Board:")
     print(board)
 
@@ -127,7 +107,8 @@ class Node(object):
         return self.f < other.f
 
     def __str__(self):
-        #return 'Node(%i, %i, %s): %s' % (self.x, self.y, self.character, self.walkable)
+        # return 'Node(%i, %i, %s, %i, %i, %i): %s' % (self.x, self.y, self.character, self.f, self.g, self.h, self.walkable)
+        # return '%s: %i' % (self.character, self.f)
         return self.character
 
     def __repr__(self):
@@ -152,9 +133,9 @@ def read_board(board_id='1-1'):
                     end = temp_node
 
             board.append(temp_line)
-    print(board)
+    # print(board)
     return board, start, end
 
 if __name__ == "__main__":
-    board_data = read_board(board_id="1-1")  # run_board returns board, start, end as a tuple
+    board_data = read_board(board_id="1-4")  # run_board returns board, start, end as a tuple
     run_astar(*board_data)  # tuple unpacking, spread tuple as arguments
