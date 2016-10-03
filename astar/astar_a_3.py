@@ -1,63 +1,63 @@
+# A* algorithm for finding best path with no obstacles and cost on nodes.
+# Also shows which nodes has been opened and which is closed.
+
 import heapq
 
 
+# The main astar algorithm
 def run_astar(board, start_node, end_node):
-    if not isinstance(board, list):
+
+    if not isinstance(board, list):  # Make sure the board is represented as a list
         return "Board must be a list"
 
-    board_width = len(board[0])
-    board_height = len(board)
+    board_width = len(board[0])  # Get the width of the board
+    board_height = len(board)  # Get the height of the board
 
-    closed_node = set()
+    closed_node = set()  # The closed nodes
 
-    priority_queue = []
+    priority_queue = []   # The opened nodes
     heapq.heapify(priority_queue)
     heapq.heappush(priority_queue, (start_node.f, start_node))
 
-    came_from = {}
+    came_from = {}  # The current road from start to end
 
     start_node.g = 0
     start_node.f = start_node.g + heuristic(start_node, end_node)
 
-    while priority_queue:
-        # print(priority_queue)
-        current_node = heapq.heappop(priority_queue)[1]
-        # print("curr", current_node)
+    while priority_queue:  # Start searching if the opened nodes is not empty
+        current_node = heapq.heappop(priority_queue)[1]  # Chose a current node, based on the node with the lowest f value in the opened queue
 
-        if current_node == end_node:
-            display_path(came_from, current_node, board, priority_queue, closed_node)
+        if current_node == end_node:  # If the current node is also the end node, then the board should be drawn and stop searching
+            display_path(came_from, current_node, board)
             break
 
         closed_node.add(current_node)
-        # print(closed_node)
 
-        adj_nodes = get_adjacent_nodes(current_node, board_width, board_height, board)
-        # print(adj_nodes)
+        adj_nodes = get_adjacent_nodes(current_node, board_width, board_height, board)  # Find the adjacent nodes to the current
 
-        for adj_node in adj_nodes:
+        for adj_node in adj_nodes:  # If the adjacent node is already closed, then don't calculate it again
             if adj_node in closed_node:
                 continue
 
-            temp_gscore = current_node.g + adj_node.cost
+            temp_gscore = current_node.g + adj_node.cost  # Set a tentativ g score for the adjacent node
 
-            if adj_node.walkable and adj_node not in came_from:
-                # Update node cost
+            if adj_node.walkable and adj_node not in came_from:  # Update the node if it is walkable and not already update
                 came_from[adj_node] = current_node
                 adj_node.g = temp_gscore
                 adj_node.h = heuristic(adj_node, end_node)
                 adj_node.f = adj_node.g + adj_node.h
 
-                heapq.heappush(priority_queue, (adj_node.f, adj_node))
+                heapq.heappush(priority_queue, (adj_node.f, adj_node))  # Add the node to the open queue
 
-            elif temp_gscore >= adj_node.g:
+            elif temp_gscore >= adj_node.g:  # If tentativ cost is less than the g score, then choose new node
                 continue
 
 
-def heuristic(node, end_node):
+def heuristic(node, end_node):  # Calculate the heuristic, with Manhatten distance
     return abs(node.x - end_node.x) + (node.y - end_node.y)
 
 
-def get_adjacent_nodes(current_node, board_w, board_h, board):
+def get_adjacent_nodes(current_node, board_w, board_h, board):  # Find the adjacent nodes from the current
     adj_nodes = []
 
     if current_node.x > 0:
@@ -75,14 +75,14 @@ def get_adjacent_nodes(current_node, board_w, board_h, board):
     return adj_nodes
 
 
-def display_path(came_from, current, board, opend, closed):
+def display_path(came_from, current, board, opend, closed):  # Make the board with colors and O for the nodes in the path
     node_path = [current]
     board_string = ""
-    while current in came_from.keys():
+    while current in came_from.keys():  # Find all nodes in the path and add to a list
         current = came_from[current]
         node_path.append(current)
 
-    for node in node_path:
+    for node in node_path:  # Change colors for the path
         if node.character == "A":
             node.character = color(32, "A")
         elif node.character == "B":
@@ -90,28 +90,27 @@ def display_path(came_from, current, board, opend, closed):
         else:
             node.character = color(31, "O")
 
-    for node in opend:
+    for node in opend:  # Change character if node is in open
         if node not in node_path:
             node[1].character = color(34, "*")
 
-    for node in closed:
+    for node in closed:  # Change character if node is closed
         if node not in node_path:
             node.character = color(36, "x")
 
-    for nodes in board:
+    for nodes in board:  # Change the board to a string in stead of list
         for node in nodes:
-            # string1 = ' (%s %i) ' % (node.character, node.cost)
             board_string += node.character
         board_string += "\n"
 
     print(board_string)
 
 
-def color(colors, string):
+def color(colors, string):  # Change colors of nodes
     return "\033[" + str(colors) + "m" + string + "\033[0m"
 
 
-def read_board(board_id='1-1'):
+def read_board(board_id='1-1'):  # Read the board and appends to lists, finds the start and end nodes
     file_name = 'boards/board-%s.txt' % board_id
     board = []
     start, end = None, None
@@ -131,9 +130,9 @@ def read_board(board_id='1-1'):
     return board, start, end
 
 
-class Node(object):
+class Node(object):  # Create a node object
 
-    def __init__(self, x, y, character):
+    def __init__(self, x, y, character):  # Set and create different values for object
         self.x = x
         self.y = y
         self.character = character
@@ -146,10 +145,10 @@ class Node(object):
         self.cost = 0
         self.set_node_cost()
 
-    def __lt__(self, other):
+    def __lt__(self, other):  # Compare the current value with other, less than
         return self.f < other.f
 
-    def __gt__(self, other):
+    def __gt__(self, other):  # Compare the current value with other, greater than
         return self.f > other.f
 
     def __str__(self):
@@ -161,7 +160,7 @@ class Node(object):
     def __repr__(self):
         return self.__str__()
 
-    def set_node_cost(self):
+    def set_node_cost(self):  # Set the cost depending on the character
         if self.character == "w":
             self.cost = 100
         elif self.character == "m":
@@ -175,6 +174,6 @@ class Node(object):
         else:
             self.cost = 1
 
-if __name__ == "__main__":
+if __name__ == "__main__":  # Create board and run a*
     board_data = read_board(board_id="2-4")  # run_board returns board, start, end as a tuple
     run_astar(*board_data)  # tuple unpacking, spread tuple as arguments
