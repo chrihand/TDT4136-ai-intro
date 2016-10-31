@@ -137,9 +137,9 @@ class CSP:
                 assignment_copy[unass_var] = value
 
                 inference = self.inference(assignment_copy, self.get_all_arcs())
-                print("Value: " + str(value) + " , Unass: " + str(unass_var) + " , Inf: " + str(inference))
+                # print("Value: " + str(value) + " , Unass: " + str(unass_var) + " , Inf: " + str(inference))
                 if inference:
-                    print("Value: " + str(value) + " , Unass: " + str(unass_var) + " , Inf: " + str(inference))
+                    # print("Value: " + str(value) + " , Unass: " + str(unass_var) + " , Inf: " + str(inference))
                     # assignment.append(unass_var, self.get_all_neighboring_arcs(unass_var))
                     result = self.backtrack(assignment_copy)
                     if result:
@@ -172,20 +172,16 @@ class CSP:
             xi = queue[0][0]
             xj = queue[0][1]
             queue.pop(0)
-            # print("Xi: " + xi)
-            # print("Xj: " + xj)
             domain = assignment[xi]
 
             if self.revise(assignment, xi, xj):
-                print(len(domain))
                 if not len(domain):
                     return False
                 neighbors = self.get_all_neighboring_arcs(xi)
                 neighbors.pop(0)
                 for xk in neighbors:
                     queue.append(xk)
-                    print("Q: %s" % (queue))
-            return True
+        return True
 
     def revise(self, assignment, i, j):
         """The function 'Revise' from the pseudocode in the textbook.
@@ -198,25 +194,46 @@ class CSP:
         """
         # TODO: IMPLEMENT THIS
         revised = False
-        foundY = False
+        # foundY = False
         domainXi = assignment[i]
         domainXj = assignment[j]
-        # print("Dom %s" % domainXi)
+
+        constraint_set = frozenset(self.constraints[i][j])
+        my_constraints = []
+
         for x in domainXi:
-            constraints = self.constraints[i][j]
-            for y in domainXj:
-                temp_tup = (x, y)
+            constraints = [(x, y) for y in domainXj if x != y] # Generate all valid (x, y) constraints
+            # print(constraints)
+
+            # for y in domainXj:
+                # temp_tup = (x, y)
                 # print(temp_tup)
-                # print("Constraints %s" % constraints)
-                if temp_tup in constraints:
-                    foundY = True
-                    break
-                if not foundY:
-                    domainXi.remove(x)
-                    revised = True
-                    # print("")
-                    # print(domainXi)
+                # print("Constraints %s" % str(temp_tup))
+                # my_constraints.append(temp_tup)
+                # print(my_constraints)
+                # print("\n")
+
+
+
+            satisfy_set = frozenset(constraints).intersection(constraint_set) # Set containing satisfying constraints
+
+            if not len(satisfy_set):
+                domainXi.remove(x)
+                revised = True
+            # constraints = self.constraints[i][j]
+            # for y in domainXj:
+            #     temp_tup = (x, y)
+            #     print(temp_tup)
+            #     print("Constraints %s" % constraints)
+            #     if temp_tup in constraints:
+            #         foundY = True
+            #         break
+            #     if not foundY:
+            #         domainXi.remove(x)
+            #         revised = True
+
         return revised
+
 
 def create_map_coloring_csp():
     """Instantiate a CSP representing the map coloring problem from the
@@ -282,7 +299,7 @@ def print_sudoku_solution(solution):
 if __name__ == "__main__":
     csp_sudoku = create_sudoku_csp('sudokus/easy.txt')
     solution = csp_sudoku.backtracking_search()
-    # print_sudoku_solution(solution)
+    print_sudoku_solution(solution)
     # print "\nself.backtrack() was called %d times.\n" % (csp_sudoku.backtrack_count) + \
     #       "self.backtrack() failed %d times.\n" % (csp_sudoku.backtrack_fail_count)
     # csp_map = create_map_coloring_csp()
