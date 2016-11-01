@@ -15,6 +15,9 @@ class CSP:
         # the variable pair (i, j)
         self.constraints = {}
 
+        self.backtrack_called = 0
+        self.backtrack_failed = 0
+
     def add_variable(self, name, domain):
         """Add a new variable to the CSP. 'name' is the variable name
         and 'domain' is a list of the legal values for the variable.
@@ -111,6 +114,8 @@ class CSP:
         """
         # TODO: IMPLEMENT THIS
 
+        self.backtrack_called += 1
+
         complete = True
         # Check if backtracking is finished
         for var in assignment:
@@ -122,28 +127,20 @@ class CSP:
         if complete:
             return assignment
 
-
-
         unass_var = self.select_unassigned_variable(assignment)
 
-
         for value in self.domains[unass_var]:
-            # assignment_copy = copy.deepcopy()
-            # print("Value: " + value)
-            # print(assignment[unass_var])
             if value in assignment[unass_var]:
-                # print("chchchch")
                 assignment_copy = copy.deepcopy(assignment)
                 assignment_copy[unass_var] = value
 
                 inference = self.inference(assignment_copy, self.get_all_arcs())
                 # print("Value: " + str(value) + " , Unass: " + str(unass_var) + " , Inf: " + str(inference))
                 if inference:
-                    # print("Value: " + str(value) + " , Unass: " + str(unass_var) + " , Inf: " + str(inference))
-                    # assignment.append(unass_var, self.get_all_neighboring_arcs(unass_var))
                     result = self.backtrack(assignment_copy)
                     if result:
                         return result
+        self.backtrack_failed += 1
         return None
 
 
@@ -178,9 +175,10 @@ class CSP:
                 if not len(domain):
                     return False
                 neighbors = self.get_all_neighboring_arcs(xi)
-                neighbors.pop(0)
+                # neighbors.pop(0)
                 for xk in neighbors:
-                    queue.append(xk)
+                    if (xk != xj):
+                        queue.append(xk)
         return True
 
     def revise(self, assignment, i, j):
@@ -199,38 +197,20 @@ class CSP:
         domainXj = assignment[j]
 
         constraint_set = frozenset(self.constraints[i][j])
-        my_constraints = []
 
         for x in domainXi:
-            constraints = [(x, y) for y in domainXj if x != y] # Generate all valid (x, y) constraints
-            # print(constraints)
+            my_constraints = []
 
-            # for y in domainXj:
-                # temp_tup = (x, y)
-                # print(temp_tup)
-                # print("Constraints %s" % str(temp_tup))
-                # my_constraints.append(temp_tup)
-                # print(my_constraints)
-                # print("\n")
+            for y in domainXj:
+                if x != y:
+                    temp_tup = (x, y)
+                    my_constraints.append(temp_tup)
 
+            match_set = frozenset(my_constraints).intersection(constraint_set) # Set containing satisfying constraints
 
-
-            satisfy_set = frozenset(constraints).intersection(constraint_set) # Set containing satisfying constraints
-
-            if not len(satisfy_set):
+            if not len(match_set):
                 domainXi.remove(x)
                 revised = True
-            # constraints = self.constraints[i][j]
-            # for y in domainXj:
-            #     temp_tup = (x, y)
-            #     print(temp_tup)
-            #     print("Constraints %s" % constraints)
-            #     if temp_tup in constraints:
-            #         foundY = True
-            #         break
-            #     if not foundY:
-            #         domainXi.remove(x)
-            #         revised = True
 
         return revised
 
@@ -297,10 +277,9 @@ def print_sudoku_solution(solution):
 
 
 if __name__ == "__main__":
-    csp_sudoku = create_sudoku_csp('sudokus/easy.txt')
-    solution = csp_sudoku.backtracking_search()
+    sudoku = create_sudoku_csp('sudokus/hard.txt')
+    solution = sudoku.backtracking_search()
     print_sudoku_solution(solution)
-    # print "\nself.backtrack() was called %d times.\n" % (csp_sudoku.backtrack_count) + \
-    #       "self.backtrack() failed %d times.\n" % (csp_sudoku.backtrack_fail_count)
-    # csp_map = create_map_coloring_csp()
-    # csp_map.backtracking_search()
+    print(" \nBacktrack called %d times" % sudoku.backtrack_called)
+    print("Backtrack failed %d times" % sudoku.backtrack_failed)
+
